@@ -5,7 +5,7 @@ use crate::num::Num;
 const SALT: [u8; 0] = [];
 
 pub fn hash(data: &[u8], out: &mut [u8]) {
-    let params = Params::new(6, 6, 1, 32).unwrap();
+    let params = Params::new(6, 64, 1, 32).unwrap();
     scrypt(data, &SALT.clone(), &params, out).unwrap();
 }
 
