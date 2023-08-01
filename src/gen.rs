@@ -15,7 +15,7 @@ impl POWRange {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct POWChallenge {
     hash: [u8; 32],
     range: POWRange
