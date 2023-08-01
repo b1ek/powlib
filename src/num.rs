@@ -23,3 +23,9 @@ impl std::ops::Mul<u128> for Num {
         self.number * rhs
     }
 }
+
+impl From<u128> for Num {
+    fn from(number: u128) -> Self {
+        Num { number }
+    }
+}
