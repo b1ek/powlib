@@ -15,6 +15,41 @@ impl POWRange {
     }
 }
 
+pub struct POWSolver {
+    challenge: POWChallenge
+}
+
+impl POWSolver {
+
+    /**
+     * Solve chunk with feedback.  
+     * Feedback is a function that is being
+     * called at each iteration of a loop,
+     * which will be useful for progressbars
+     * and visual feedback.
+     * 
+     * Example:
+     * ```rust
+       let challenge = POWChallenge::make(POWRange::new(0, 16));
+       let num = POWSolver::new(challenge).chunk_solve_feedback(0, 16, |x| println!("{}", x)).unwrap();
+       println!("Found number: {}", num)
+     * ```
+     */
+    pub fn chunk_solve_feedback(self: &POWSolver, start: u128, end: u128, callback: fn(u128)) -> Option<u128> {
+        for i in start..end {
+            callback(i);
+            if self.challenge.check(i.into()) {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    pub fn new(challenge: POWChallenge) -> POWSolver {
+        POWSolver { challenge }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct POWChallenge {
     hash: [u8; 32],
