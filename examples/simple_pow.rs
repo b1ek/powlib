@@ -1,7 +1,7 @@
 
 use std::time::Instant;
 
-use powlib::{self, gen::{POWRange, POWChallenge}, hash::hash_num, num::Num};
+use powlib::{self, gen::{POWRange, POWChallenge}, hash::hash_num, num::Num, solver::POWSolver};
 
 fn main() {
     {
@@ -13,6 +13,7 @@ fn main() {
     {
         let time = Instant::now();
         let challenge = POWChallenge::make(POWRange::new(0, 20480));
-        println!("Solvling {} took {} seconds", challenge.solve_singlethread(), time.elapsed().as_secs_f32());
+        let mut solver = POWSolver::new(challenge);
+        println!("Solvling {} took {} seconds", solver.solve_signle().unwrap(), time.elapsed().as_secs_f32());
     }
 }
