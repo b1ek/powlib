@@ -1,4 +1,4 @@
-use std::{sync::{mpsc, Arc, atomic::{AtomicBool, Ordering}}, thread::{self, JoinHandle}, time::Duration};
+use std::{sync::{mpsc, Arc, atomic::{AtomicBool, Ordering}}, thread::{self, JoinHandle}};
 
 use crate::{gen::POWChallenge, num::Num};
 
