@@ -15,41 +15,6 @@ impl POWRange {
     }
 }
 
-pub struct POWSolver {
-    challenge: POWChallenge
-}
-
-impl POWSolver {
-
-    /**
-     * Solve chunk with feedback.  
-     * Feedback is a function that is being
-     * called at each iteration of a loop,
-     * which will be useful for progressbars
-     * and visual feedback.
-     * 
-     * Example:
-     * ```rust
-       let challenge = POWChallenge::make(POWRange::new(0, 16));
-       let num = POWSolver::new(challenge).chunk_solve_feedback(0, 16, |x| println!("{}", x)).unwrap();
-       println!("Found number: {}", num)
-     * ```
-     */
-    pub fn chunk_solve_feedback(self: &POWSolver, start: u128, end: u128, callback: fn(u128)) -> Option<u128> {
-        for i in start..end {
-            callback(i);
-            if self.challenge.check(i.into()) {
-                return Some(i);
-            }
-        }
-        None
-    }
-
-    pub fn new(challenge: POWChallenge) -> POWSolver {
-        POWSolver { challenge }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct POWChallenge {
     hash: [u8; 32],
@@ -78,6 +43,12 @@ impl POWChallenge {
         hash_num(num) == self.hash
     }
 
+    /**
+       Solve a chunk of numbers.
+       
+       This method is deprecated. Use `POWSolver` instead.
+     */
+    #[deprecated]
     pub fn chunk_solve(self: &POWChallenge, start: u128, end: u128) -> Option<u128> {
         for i in start..end {
             if self.check(Num::new(i)) {
@@ -87,6 +58,12 @@ impl POWChallenge {
         None
     }
 
+    /**
+       Solve the challenge.
+       
+       This method is deprecated. Use `POWSolver` instead.
+     */
+    #[deprecated]
     pub fn solve_singlethread(self: &POWChallenge) -> u128 {
         match self.chunk_solve(self.range.min, self.range.max) {
             Some(v) => v,
