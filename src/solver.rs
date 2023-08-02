@@ -68,6 +68,12 @@ impl POWSolver {
         range / threads as u128
     }
 
+    /**
+       Solve a challenge using multiple threads,
+       which would be much faster than using just one thread
+
+       This method also supports callbacks via `Option`
+     */
     pub fn solve_blocking(self: &mut POWSolver, threads: u8, callback: Option<fn(u128)>) -> u128 {
         let (send, recv) = mpsc::sync_channel::<u128>(1);
         let mut thread_start: u128 = self.challenge.range.min;
