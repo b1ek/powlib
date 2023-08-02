@@ -21,3 +21,11 @@ fn main() {
 }
 
 ```
+
+# Examples
+To run examples that have their own directory, cd to their directory and run `cargo r`. Like this:
+
+```sh
+$ cd examples/multithreaded
+$ cargo r --release # debug version will be much slower
+```
