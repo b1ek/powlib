@@ -1,4 +1,4 @@
-use std::{sync::{mpsc::{self, Receiver, SyncSender}, Arc, atomic::{AtomicBool, Ordering}}, thread::{self, JoinHandle}};
+use std::{sync::{mpsc, Arc, atomic::{AtomicBool, Ordering}}, thread::{self, JoinHandle}};
 
 use crate::{gen::POWChallenge, num::Num};
 
@@ -77,7 +77,7 @@ impl POWSolver {
         let stop = Arc::new(AtomicBool::new(false));
         let range = self.challenge.range.max - self.challenge.range.min;
 
-        for i in 0..threads {
+        for _ in 0..threads {
             let solver = self.clone();
             let send = send.clone();
             let stop = stop.clone();
