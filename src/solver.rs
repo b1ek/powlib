@@ -53,6 +53,13 @@ impl POWSolver {
         None
     }
 
+    /**
+       Solve the challenge using just one thread.
+     */
+    pub fn solve_signle(self: &mut POWSolver) -> Option<u128> {
+        return self.chunk_solve(self.challenge.range.min, self.challenge.range.max);
+    }
+
     pub fn new(challenge: POWChallenge) -> POWSolver {
         POWSolver { challenge, result: None }
     }
