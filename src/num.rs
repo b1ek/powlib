@@ -29,3 +29,9 @@ impl From<u128> for Num {
         Num { number }
     }
 }
+
+impl From<Num> for u128 {
+    fn from(value: Num) -> Self {
+        value.number
+    }
+}
