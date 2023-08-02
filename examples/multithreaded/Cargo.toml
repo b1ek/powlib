@@ -5,4 +5,5 @@ edition = "2021"
 publish = false
 
 [dependencies]
+indicatif = "0.17.5"
 powlib = { path = '../..' }

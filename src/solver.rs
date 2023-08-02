@@ -1,4 +1,4 @@
-use std::{sync::{mpsc, Arc, atomic::{AtomicBool, Ordering}}, thread::{self, JoinHandle}};
+use std::{sync::{mpsc, Arc, atomic::{AtomicBool, Ordering}}, thread::{self, JoinHandle}, time::Duration};
 
 use crate::{gen::POWChallenge, num::Num};
 
@@ -6,6 +6,11 @@ use crate::{gen::POWChallenge, num::Num};
 pub struct POWSolver {
     challenge: POWChallenge,
     result: Option<u128>
+}
+
+enum SolverThreadMessage {
+    PlainNumber(u128),
+    Found(u128)
 }
 
 impl POWSolver {
@@ -74,8 +79,8 @@ impl POWSolver {
 
        This method also supports callbacks via `Option`
      */
-    pub fn solve_blocking(self: &mut POWSolver, threads: u8, callback: Option<fn(u128)>) -> u128 {
-        let (send, recv) = mpsc::sync_channel::<u128>(1);
+    pub fn solve_blocking(self: &mut POWSolver, threads: u8, mut callback: Option<impl FnMut(u128)>) -> u128 {
+        let (send, recv) = mpsc::sync_channel::<SolverThreadMessage>(1);
         let mut thread_start: u128 = self.challenge.range.min;
 
         let size = self.chunksize(threads);
@@ -94,36 +99,49 @@ impl POWSolver {
             }
 
             handles.push(
-                    thread::spawn(move || {
-                        for j in thread_start..end {
-                            if stop.load(Ordering::Relaxed) { break }
-                            if callback.is_some() {
-                                callback.unwrap()(j);
-                            }
+                thread::spawn(move || {
+                    for j in thread_start..end {
+                        if stop.load(Ordering::Relaxed) { break }
 
-                            if solver.challenge.check(Num::from(j as u128)) {
-                                stop.store(true, Ordering::Relaxed);
-                                send.send(j as u128).unwrap();
-                            }
+                        if solver.challenge.check(Num::from(j as u128)) {
+                            stop.store(true, Ordering::Relaxed);
+                            send.send(SolverThreadMessage::Found(j)).unwrap();
+                        } else {
+                            send.send(SolverThreadMessage::PlainNumber(j)).unwrap();
                         }
                     }
-                )
+                })
             );
 
             thread_start = thread_start + size + 1;
         }
 
-        let result = recv.recv().unwrap();
-        stop.load(Ordering::Relaxed);
+        let mut result = 0;
 
         loop {
-            let mut all_finished = true;
-            for handle in handles.iter() {
-                if !handle.is_finished() {
-                    all_finished = false
+            let status = recv.recv().unwrap();
+            match status {
+                SolverThreadMessage::PlainNumber(num) => {
+                    if callback.is_some() {
+                        callback.as_mut().unwrap()(num);
+                    }
+                },
+                SolverThreadMessage::Found(num) => {
+                    result = num;
+                    stop.store(true, Ordering::Relaxed);
+                    break;
                 }
             }
-            if all_finished { break }
+
+            if stop.load(Ordering::Relaxed) {
+                let mut all_finished = true;
+                for handle in handles.iter() {
+                    if !handle.is_finished() {
+                        all_finished = false
+                    }
+                }
+                if all_finished { break }
+            }
         }
 
         self.result = Some(result);
