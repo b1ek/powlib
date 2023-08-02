@@ -65,6 +65,9 @@ impl POWChallenge {
      */
     #[deprecated]
     pub fn solve_singlethread(self: &POWChallenge) -> u128 {
+        // the method is deprecated itself
+        
+        #[allow(deprecated)]
         match self.chunk_solve(self.range.min, self.range.max) {
             Some(v) => v,
             None => panic!("Number not found in range")
