@@ -5,8 +5,8 @@ use crate::{hash::hash_num, num::Num};
 
 #[derive(Debug, Clone)]
 pub struct POWRange {
-    min: u128,
-    max: u128
+    pub min: u128,
+    pub max: u128
 }
 
 impl POWRange {
