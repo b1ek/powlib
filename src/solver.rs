@@ -2,6 +2,9 @@ use std::{sync::{mpsc, Arc, atomic::{AtomicBool, Ordering}}, thread::{self, Join
 
 use crate::{gen::POWChallenge, num::Num};
 
+#[cfg(feature = "tokio_futures")]
+use {tokio, tokio::task};
+
 #[derive(Debug, Clone)]
 pub struct POWSolver {
     challenge: POWChallenge,
@@ -147,6 +150,75 @@ impl POWSolver {
         self.result = Some(result);
 
         result
+    }
+
+    #[cfg(feature = "tokio_futures")]
+    pub async fn chunk_future(self: &POWSolver, start: u128, end: u128) -> Option<u128> {
+        for i in start..end {
+            if self.challenge.check(Num::from(i)) {
+                return Some(i);
+            }
+        }
+        None
+    }
+    
+    #[cfg(feature = "tokio_futures")]
+    pub async fn solve_futures(self: &mut POWSolver, futures: u8) -> Result<u128, String> {
+        use tokio::task::JoinSet;
+
+
+        let mut start: u128 = 0;
+        let size = self.chunksize(futures);
+        let range = self.challenge.range.max - self.challenge.range.min;
+
+        let stop = Arc::new(AtomicBool::new(false));
+
+        let mut tasks: JoinSet<Option<u128>> = JoinSet::new();
+        for _ in 0..futures {
+            let mut end = start + size;
+            let stop = stop.clone();
+            let solver = self.clone();
+
+            if end > range {
+                end -= end % range;
+            }
+
+            tasks.spawn(async move {
+                for i in 0..end {
+                    if stop.load(Ordering::Relaxed) {
+                        break;
+                    }
+                    if solver.challenge.check(Num::from(i)) {
+                        stop.store(true, Ordering::Relaxed);
+                        return Some(i);
+                    }
+                }
+                None
+            });
+
+            start = start + size + 1;
+        }
+
+        for _ in 0..futures {
+            let result = tasks.join_next().await;
+            if result.is_none() {
+                return Err("Join set is empty".to_string());
+            }
+            let result = result.unwrap();
+
+            if result.is_err() {
+                return Err(format!("JoinError: {}", result.unwrap_err()));
+            }
+
+            let result = result.unwrap();
+
+            if result.is_some() {
+                self.result = Some(result.unwrap());
+                return Ok(self.result.unwrap());
+            }
+        }
+        Err("Failed to find".to_string())
+
     }
 
     pub fn new(challenge: POWChallenge) -> POWSolver {
